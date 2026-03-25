@@ -1,0 +1,15 @@
+{
+  "name": "99tech-campaign-manager",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "yarn workspaces run dev",
+    "build": "yarn workspaces run build",
+    "test": "yarn workspaces run test",
+    "db:seed": "cd apps/api && ts-node src/seed.ts"
+  }
+}
