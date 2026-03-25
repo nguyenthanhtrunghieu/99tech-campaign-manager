@@ -44,21 +44,21 @@ UX Flow: Comprehensive error/loading states and intuitive navigation.
 🤖 AI Collaboration Workflow (Multi-Agent Strategy)
 This project was developed using a sophisticated Human-in-the-loop approach, orchestrating three different AI agents to ensure architectural integrity and rapid execution.
 
-1. The Planning Phase (Brainstorming)
+- The Planning Phase (Brainstorming)
 Agent: Claude
 
 Role: Architectural Consultant.
 
 Process: I started by providing the project requirements to Claude to brainstorm construction methods. While Claude suggested various patterns, I remained the final decision-maker. I specifically enforced a 3-Layer Architecture (Directives, Orchestration, Execution) and established the implementation plan.
 
-2. The Building Phase (Execution)
+- The Building Phase (Execution)
 Agent: Antigravity (AG)
 
 Role: The Builder.
 
 Process: Once the blueprint was finalized, I tasked AG with generating the boilerplate code, setting up the Monorepo structure, and implementing the base API services according to my architectural directives.(Step-by-step)
 
-3. The Auditing Phase (Terminal-based)
+- The Auditing Phase (Terminal-based)
 Agent: Claude Code
 
 Role: The Auditor & Fixer.
@@ -96,34 +96,43 @@ Setup Dockerfile for each workspace and a root docker-compose.yml that includes 
 Constraint: Use PostgreSQL, Sequelize, and TypeScript for the backend. Use Tailwind CSS for the frontend.
 
 Workflow Rule:
+
 After each sub-task completion, I will trigger Claude Code to audit your output. Do not proceed to the next feature until Claude returns an 'All PASS' status."
 
 Prompt 2 (Database & Schema Audit)"Claude, perform a Step-by-Step Audit on the Database layer.
+
 Criteria:
 
-1.Verify all primary keys use UUIDs.
-2.Ensure all fields follow snake_case naming conventions.
-3.Check for composite indexes on (campaign_id, status) to optimize dashboard queries.
+- Verify all primary keys use UUIDs.
 
-Return an 'All PASS' only if the Sequelize models perfectly match these criteria."
+- Ensure all fields follow snake_case naming conventions.
 
-Prompt 3 (ype Safety & Validation Audit): ""Audit the Communication Layer between API and Shared package.
+- Check for composite indexes on (campaign_id, status) to optimize dashboard queries.
+
+- Return an 'All PASS' only if the Sequelize models perfectly match these criteria."
+
+Prompt 3 (Type Safety & Validation Audit): "Audit the Communication Layer between API and Shared package.
+
 Criteria:
 
-1.Verify Zod schemas correctly validate future dates for scheduled campaigns.
+-Verify Zod schemas correctly validate future dates for scheduled campaigns.
 
-2.Ensure the API uses these schemas for all Request Body validation.
+-Ensure the API uses these schemas for all Request Body validation.
 
-3.Check if TypeScript interfaces in @99tech/shared are strictly implemented in both Web and API.
-Do not proceed until all validation logic is bulletproof.""
+-Check if TypeScript interfaces in @99tech/shared are strictly implemented in both Web and API.
+
+- Do not proceed until all validation logic is bulletproof."
 
 3. Where AI Agent was Wrong or Needed Correction
+
 A key takeaway is that AI precision is directly proportional to prompt specificity. Vague instructions often lead to suboptimal or incorrect outputs. However, even with detailed prompts, human oversight remains essential to correct "AI hallucinations" or logical missteps.
+
 For example: During the system planning and design phase, Claude proposed an overengineered project structure that was unnecessarily complex for a mini-webapp, requiring me to manually intervene and streamline it.
 
 In Docker packaging, Claude attempted a multi-stage build that broke Yarn Workspace symlinks and incorrectly used localhost for service connections, requiring me to manually fix the networking logic and enforce a reliable single-stage build.
 
 4. What I would NOT let AI Agent do — and why
+
 Architectural Blueprinting: I did not allow the AI to define the system's core layers. AI tends to favor generic, flat structures or overskill architecture. I used the 3-Layer Architecture to ensure the project remains scalable and maintainable for a real-world production environment.
 
 Final UX Validation: I personally audited every navigation flow. AI can write "working" code quickly that is logically flawed from a user journey perspective. Human intuition is still superior for final quality assurance.
