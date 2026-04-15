@@ -6,6 +6,7 @@ import express from 'express';
 import { sequelize } from './db';
 import './models';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { authRouter } from './controllers/auth.controller';
 import { campaignRouter } from './controllers/campaign.controller';
 import { recipientRouter } from './controllers/recipient.controller';
@@ -14,6 +15,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(express.json());
+app.use(cookieParser());
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3001')
   .split(',')
   .map((o) => o.trim());
@@ -45,12 +47,8 @@ app.get('/health', (req, res) => {
 async function start() {
   try {
     await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
-    
-    // Sync models
-    await sequelize.sync({ alter: true });
-    console.log('Database synced successfully.');
-    
+    console.log('Database connection established.');
+
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });

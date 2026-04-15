@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import Cookies from 'js-cookie';
+import api from '@/lib/api-client';
 
 interface User {
   id: string;
@@ -9,32 +8,30 @@ interface User {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
-  setAuth: (user: User, token: string) => void;
-  logout: () => void;
+  loading: boolean;
+  setAuth: (user: User) => void;
+  checkAuth: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      setAuth: (user, token) => {
-        // Sync token to cookie for Middleware visibility with stricter security
-        Cookies.set('auth_token', token, { 
-          expires: 1, 
-          sameSite: 'strict',
-          secure: process.env.NODE_ENV === 'production'
-        });
-        set({ user, token });
-      },
-      logout: () => {
-        Cookies.remove('auth_token');
-        set({ user: null, token: null });
-      },
-    }),
-    {
-      name: 'auth-storage',
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  loading: true,
+  setAuth: (user) => set({ user, loading: false }),
+  checkAuth: async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      set({ user: data.user, loading: false });
+    } catch {
+      set({ user: null, loading: false });
     }
-  )
-);
+  },
+  logout: async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+    set({ user: null, loading: false });
+  },
+}));

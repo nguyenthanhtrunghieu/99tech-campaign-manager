@@ -2,10 +2,14 @@ import { User } from './User';
 import { Campaign } from './Campaign';
 import { Recipient } from './Recipient';
 import { CampaignRecipient } from './CampaignRecipient';
+import { RefreshToken } from './RefreshToken';
 
 // Associations
-User.hasMany(Campaign, { foreignKey: 'userId', as: 'campaigns' });
-Campaign.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Campaign, { foreignKey: 'createdBy', as: 'campaigns' });
+Campaign.belongsTo(User, { foreignKey: 'createdBy', as: 'user' });
+
+User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens', onDelete: 'CASCADE' });
+RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Campaign.belongsToMany(Recipient, {
   through: CampaignRecipient,
@@ -22,7 +26,9 @@ Recipient.belongsToMany(Campaign, {
 });
 
 // Join Table Associations
-CampaignRecipient.belongsTo(Campaign, { foreignKey: 'campaignId', as: 'campaign' });
+Campaign.hasMany(CampaignRecipient, { foreignKey: 'campaignId', as: 'campaignRecipients', onDelete: 'CASCADE' });
+CampaignRecipient.belongsTo(Campaign, { foreignKey: 'campaignId', as: 'campaign', onDelete: 'CASCADE' });
 CampaignRecipient.belongsTo(Recipient, { foreignKey: 'recipientId', as: 'recipient' });
 
-export { User, Campaign, Recipient, CampaignRecipient };
+export { User, Campaign, Recipient, CampaignRecipient, RefreshToken };
+

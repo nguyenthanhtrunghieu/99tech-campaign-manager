@@ -10,6 +10,7 @@
     "dev": "yarn workspaces run dev",
     "build": "yarn workspaces run build",
     "test": "yarn workspaces run test",
+    "db:migrate": "yarn workspace @99tech/api db:migrate",
     "db:seed": "cd apps/api && ts-node src/seed.ts"
   }
 }

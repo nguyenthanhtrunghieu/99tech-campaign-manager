@@ -1,6 +1,6 @@
 import { Campaign, Recipient, CampaignRecipient } from '../models';
 import { CampaignCreate, CampaignUpdate, CampaignStatus } from '@99tech/shared';
-import { Transaction } from 'sequelize';
+import { Transaction, Op } from 'sequelize';
 import { sequelize } from '../db';
 import { calculateProgress } from '../utils/stats.util';
 
@@ -42,8 +42,16 @@ export class CampaignRepository {
     });
   }
 
-  async list(createdBy: string): Promise<Campaign[]> {
-    return Campaign.findAll({ where: { createdBy } });
+  async list(createdBy: string, cursor?: string, limit: number = 10): Promise<Campaign[]> {
+    const where: any = { createdBy };
+    if (cursor) {
+      where.id = { [Op.lt]: cursor };
+    }
+    return Campaign.findAll({ 
+      where,
+      limit: limit + 1,
+      order: [['id', 'DESC']]
+    });
   }
 
   async findById(id: string, createdBy: string): Promise<Campaign | null> {

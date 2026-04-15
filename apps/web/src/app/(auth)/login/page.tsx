@@ -29,8 +29,8 @@ export default function LoginPage() {
       setError(null);
       const response = await api.post('/auth/login', data);
       
-      // Store token and user in Zustand store (persisted to localStorage)
-      setAuth(response.data.user, response.data.token);
+      // Store user in Zustand store (token is strictly managed via HttpOnly cookies natively)
+      setAuth(response.data.user);
       
       // Redirect to dashboard as requested
       router.push('/dashboard');

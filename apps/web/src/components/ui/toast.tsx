@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-type ToastVariant = 'default' | 'success' | 'error';
+type ToastVariant = 'default' | 'success' | 'error' | 'warning';
 
 interface Toast {
   id: string;
@@ -29,6 +29,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     default: 'bg-slate-900 text-white',
     success: 'bg-emerald-600 text-white',
     error: 'bg-red-600 text-white',
+    warning: 'bg-amber-500 text-white',
   };
 
   return (

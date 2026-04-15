@@ -3,6 +3,7 @@ import { CampaignCreate, CampaignUpdate, CampaignStatus, CampaignRecipientStatus
 import { NotificationService } from './notifications/NotificationService';
 import { MockEmailStrategy } from './notifications/MockEmailStrategy';
 import { CampaignRecipient } from '../models';
+import { sanitizeHtmlContent } from '../utils/sanitize.util';
 
 /**
  * CampaignService
@@ -24,14 +25,27 @@ export class CampaignService {
    * Recipients are upserted and linked atomically inside a DB transaction.
    */
   async create(data: CampaignCreate, createdBy: string) {
-    return this.campaignRepository.create({ ...data, createdBy }, data.recipientEmails);
+    const sanitizedData = {
+      ...data,
+      htmlContent: sanitizeHtmlContent(data.htmlContent)
+    };
+    return this.campaignRepository.create({ ...sanitizedData, createdBy }, data.recipientEmails);
   }
 
   /**
    * List all campaigns owned by the given user.
    */
-  async list(createdBy: string) {
-    return this.campaignRepository.list(createdBy);
+  async list(createdBy: string, cursor?: string, limit: number = 10) {
+    const campaigns = await this.campaignRepository.list(createdBy, cursor, limit);
+    const hasNextPage = campaigns.length > limit;
+    const data = hasNextPage ? campaigns.slice(0, limit) : campaigns;
+    const nextCursor = hasNextPage ? data[data.length - 1].id : null;
+
+    return {
+      data,
+      nextCursor,
+      hasNextPage
+    };
   }
 
   /**
@@ -57,7 +71,12 @@ export class CampaignService {
       throw new Error('Only draft campaigns can be updated');
     }
 
-    return this.campaignRepository.update(id, createdBy, data);
+    const sanitizedData = {
+      ...data,
+      htmlContent: data.htmlContent ? sanitizeHtmlContent(data.htmlContent) : data.htmlContent
+    };
+
+    return this.campaignRepository.update(id, createdBy, sanitizedData);
   }
 
   /**
@@ -129,7 +148,19 @@ export class CampaignService {
         }
       }
 
-      await this.campaignRepository.updateStatus(campaignId, CampaignStatus.COMPLETED);
+      // Source of Truth Check: aggregate final state from the DB
+      const stats = await this.campaignRepository.getStatsByCampaignId(campaignId);
+      
+      let finalStatus = CampaignStatus.COMPLETED;
+      const hasUnsuccessful = stats.failed > 0 || stats.pending > 0;
+      
+      if (hasUnsuccessful && stats.sent > 0) {
+        finalStatus = CampaignStatus.PARTIALLY_FAILED;
+      } else if (hasUnsuccessful && stats.sent === 0) {
+        finalStatus = CampaignStatus.FAILED;
+      }
+
+      await this.campaignRepository.updateStatus(campaignId, finalStatus);
     } catch (err) {
       console.error(`[BackgroundSendWorker] Critical worker failure for campaign ${campaignId}:`, err);
       await this.campaignRepository.updateStatus(campaignId, CampaignStatus.FAILED);

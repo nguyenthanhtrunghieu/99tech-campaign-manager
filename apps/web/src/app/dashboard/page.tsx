@@ -16,18 +16,34 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [campaigns, setCampaigns] = React.useState<Campaign[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [nextCursor, setNextCursor] = React.useState<string | null>(null);
+  const [hasNextPage, setHasNextPage] = React.useState(false);
+
+  const fetchCampaigns = React.useCallback(async (cursor?: string) => {
+    if (cursor) setLoadingMore(true);
+    else setLoading(true);
+
+    try {
+      const res = await api.get('/campaigns', { params: { cursor, limit: 10 } });
+      const { data, nextCursor: newCursor, hasNextPage: hasNext } = res.data;
+      
+      setCampaigns(prev => cursor ? [...prev, ...data] : data);
+      setNextCursor(newCursor);
+      setHasNextPage(hasNext);
+    } catch (err: any) {
+      toast(err.displayMessage || 'Failed to load campaigns', 'error');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [toast]);
 
   React.useEffect(() => {
-    // Middleware handles the redirect, but this is a secondary safety check
-    if (!user) {
-      setLoading(false);
-      return;
+    if (user) {
+      fetchCampaigns();
     }
-    api.get('/campaigns')
-      .then((res) => setCampaigns(res.data))
-      .catch((err) => toast(err.displayMessage || 'Failed to load campaigns', 'error'))
-      .finally(() => setLoading(false));
-  }, [user, toast]);
+  }, [user, fetchCampaigns]);
 
   const handleDelete = React.useCallback(async (id: string) => {
     if (!confirm('Delete this campaign?')) return;
@@ -88,7 +104,7 @@ export default function DashboardPage() {
                 <div className="text-right">
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-1.5 px-0.5">Delivery Status</p>
                   <Badge 
-                    variant={campaign.status === 'DRAFT' ? 'default' : campaign.status === 'SENDING' ? 'info' : campaign.status === 'COMPLETED' ? 'success' : 'error'} 
+                    variant={campaign.status === 'DRAFT' ? 'default' : campaign.status === 'SENDING' ? 'info' : campaign.status === 'COMPLETED' ? 'success' : campaign.status === 'PARTIALLY_FAILED' ? 'warning' : 'error'} 
                     className={`px-4 py-1.5 rounded-lg font-bold text-[11px] ${campaign.status === 'SENDING' ? 'animate-pulse ring-4 ring-blue-50' : ''}`}
                   >
                     {campaign.status}
@@ -116,6 +132,19 @@ export default function DashboardPage() {
               </div>
             </Card>
           ))}
+          
+          {hasNextPage && (
+            <div className="flex justify-center mt-8">
+              <Button 
+                variant="outline" 
+                onClick={() => fetchCampaigns(nextCursor!)} 
+                disabled={loadingMore}
+                className="rounded-xl px-8"
+              >
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </main>

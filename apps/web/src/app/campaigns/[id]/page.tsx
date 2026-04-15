@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/toast';
 import { ArrowLeft, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { Campaign, CampaignStats, CampaignStatus } from '@99tech/shared';
+import DOMPurify from 'dompurify';
 
 export default function CampaignDetailsPage() {
   const params = useParams();
@@ -51,11 +52,11 @@ export default function CampaignDetailsPage() {
         setStats(statsRes.data);
 
         const currentStatus = campRes.data?.status;
-        if (currentStatus === 'COMPLETED' || currentStatus === 'FAILED') {
+        if (currentStatus === 'COMPLETED' || currentStatus === 'FAILED' || currentStatus === 'PARTIALLY_FAILED') {
           clearInterval(interval);
           toast(
-            currentStatus === 'COMPLETED' ? 'Campaign delivered successfully!' : 'Campaign encountered errors',
-            currentStatus === 'COMPLETED' ? 'success' : 'error'
+            currentStatus === 'COMPLETED' ? 'Campaign delivered successfully!' : currentStatus === 'PARTIALLY_FAILED' ? 'Campaign delivered with some failures' : 'Campaign encountered errors',
+            currentStatus === 'COMPLETED' ? 'success' : currentStatus === 'PARTIALLY_FAILED' ? 'warning' : 'error'
           );
         }
       } catch (err: any) {
@@ -80,6 +81,13 @@ export default function CampaignDetailsPage() {
     }
   }, [params.id, toast]);
 
+  const sanitizedHtml = React.useMemo(() => {
+    if (!campaign?.htmlContent) return '';
+    return typeof window !== 'undefined'
+      ? DOMPurify.sanitize(campaign.htmlContent)
+      : campaign.htmlContent;
+  }, [campaign?.htmlContent]);
+
   if (loading) return <div className="p-8 text-center text-slate-500">Loading details...</div>;
   if (!campaign) return <div className="p-8 text-center text-red-500">Campaign not found</div>;
 
@@ -100,7 +108,7 @@ export default function CampaignDetailsPage() {
                 <p className="text-slate-500 mt-1">Subject: {campaign.subject}</p>
               </div>
               <Badge
-                variant={campaign.status === 'SENDING' ? 'info' : campaign.status === 'COMPLETED' ? 'success' : 'default'}
+                variant={campaign.status === 'SENDING' ? 'info' : campaign.status === 'COMPLETED' ? 'success' : campaign.status === 'PARTIALLY_FAILED' ? 'warning' : campaign.status === 'FAILED' ? 'error' : 'default'}
                 className="px-4 py-1 text-sm uppercase"
               >
                 {campaign.status}
@@ -152,7 +160,7 @@ export default function CampaignDetailsPage() {
             <h2 className="text-xl font-bold text-slate-900 mb-4">Email Preview</h2>
             <div
               className="p-6 bg-white border rounded-lg prose max-w-none min-h-[200px]"
-              dangerouslySetInnerHTML={{ __html: campaign.htmlContent }}
+              dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
             />
           </Card>
         </div>

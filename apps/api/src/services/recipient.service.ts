@@ -15,10 +15,19 @@ export class RecipientService {
   }
 
   /**
-   * List all recipients.
+   * List all recipients with cursor-based pagination.
    */
-  async list() {
-    return this.recipientRepository.list();
+  async list(cursor?: string, limit: number = 10) {
+    const recipients = await this.recipientRepository.list(cursor, limit);
+    const hasNextPage = recipients.length > limit;
+    const data = hasNextPage ? recipients.slice(0, limit) : recipients;
+    const nextCursor = hasNextPage ? data[data.length - 1].id : null;
+
+    return {
+      data,
+      nextCursor,
+      hasNextPage
+    };
   }
 
   /**

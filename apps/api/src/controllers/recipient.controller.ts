@@ -16,10 +16,12 @@ recipientRouter.use(authMiddleware);
  * @access  Private
  * @returns 200 Recipient[] | 500 { message }
  */
-recipientRouter.get('/', async (_req: Request, res: Response) => {
+recipientRouter.get('/', async (req: Request, res: Response) => {
   try {
-    const recipients = await recipientService.list();
-    res.json(recipients);
+    const cursor = req.query.cursor as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const result = await recipientService.list(cursor, limit);
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }

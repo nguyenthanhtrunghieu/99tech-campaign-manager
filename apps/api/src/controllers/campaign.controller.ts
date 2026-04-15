@@ -34,8 +34,10 @@ campaignRouter.post('/', validateRequest(CampaignCreateSchema), async (req: Auth
  */
 campaignRouter.get('/', async (req: AuthRequest, res: Response) => {
   try {
-    const campaigns = await campaignService.list(req.user!.id);
-    res.json(campaigns);
+    const cursor = req.query.cursor as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const result = await campaignService.list(req.user!.id, cursor, limit);
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }

@@ -58,7 +58,7 @@ export function Navbar() {
           variant="outline" 
           size="sm" 
           className="flex items-center gap-2"
-          onClick={() => { logout(); router.push('/login'); }}
+          onClick={async () => { await logout(); router.push('/login'); }}
         >
           <LogOut className="w-4 h-4" /> Logout
         </Button>
